@@ -16,4 +16,5 @@ jobs:
         username: ${{ secrets.DOCKER_USER }}
         password: ${{ secrets.DOCKER_PASS }}
     - name: Build the Docker image
-      run: docker build ./nginx-php --file Dockerfile --tag ${{ secrets.DOCKER_USER }}/nginx-php
+      working-directory: ./nginx-php
+      run: docker build . --file Dockerfile --tag ${{ secrets.DOCKER_USER }}/nginx-php
