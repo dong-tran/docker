@@ -13,10 +13,10 @@ RUN yum install -y -q ghostscript
 RUN yum install -y -q ImageMagick ImageMagick-devel && \
   pear update-channels && \
   pecl update-channels && \
-  pecl install -q --configureoptions 'with-imagick="autodetect"' imagick
+  pecl -q install --configureoptions 'with-imagick="autodetect"' imagick
 RUN echo "extension=imagick" >> /etc/php.d/30-imagick.ini
 # Install php-redis
-RUN pecl install -q redis
+RUN pecl -q install redis
 RUN echo "extension=redis" >> /etc/php.d/30-redis.ini
 # Cleanup
 RUN yum remove -y -q gcc make && \
