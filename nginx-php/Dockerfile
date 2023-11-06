@@ -3,14 +3,14 @@ FROM wordpress:php8.2-fpm as wpsrc
 FROM amazonlinux
 
 RUN yum -y update
-RUN yum install -y gcc make
-RUN yum install -y nginx php-fpm
-RUN yum install -y php-devel php-mysqli php-pdo \
+RUN yum install -y -q gcc make
+RUN yum install -y -q nginx php-fpm
+RUN yum install -y -q php-devel php-mysqli php-pdo \
   php-pear php-mbstring php-cli php-odbc \
   php-gd php-xml php-soap php-zip php-intl php-opcache
-RUN yum install -y ghostscript
+RUN yum install -y -q ghostscript
 # Install Imagick
-RUN yum install -y ImageMagick ImageMagick-devel && \
+RUN yum install -y -q ImageMagick ImageMagick-devel && \
   pear update-channels && \
   pecl update-channels && \
   pecl install --configureoptions 'with-imagick="autodetect"' imagick
@@ -19,7 +19,7 @@ RUN echo "extension=imagick" >> /etc/php.d/30-imagick.ini
 RUN pecl install redis
 RUN echo "extension=redis" >> /etc/php.d/30-redis.ini
 # Cleanup
-RUN yum remove -y gcc make && \
+RUN yum remove -y -q gcc make && \
   yum autoremove && \
   yum clean all
 # Create folder for unix sock
