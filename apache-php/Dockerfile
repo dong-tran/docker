@@ -41,4 +41,5 @@ RUN chown -R apache:apache /var/www/html && \
 # Entrypoint
 COPY resources/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod a+x /usr/local/bin/entrypoint.sh
+
 ENTRYPOINT [ "entrypoint.sh" ]
