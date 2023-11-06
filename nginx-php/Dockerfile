@@ -1,4 +1,4 @@
-# FROM wordpress:php8.2-fpm as wpsrc
+FROM wordpress:php8.2-fpm as wpsrc
 
 FROM amazonlinux
 
@@ -7,7 +7,8 @@ RUN yum install -y gcc make
 RUN yum install -y nginx php-fpm
 RUN yum install -y php-devel php-mysqli php-pdo \
   php-pear php-mbstring php-cli php-odbc \
-  php-gd php-xml php-soap php-zip php-intl
+  php-gd php-xml php-soap php-zip php-intl php-opcache
+RUN yum install -y ghostscript
 # Install Imagick
 RUN yum install -y ImageMagick ImageMagick-devel && \
   pear update-channels && \
@@ -30,12 +31,10 @@ COPY resources/php-fpm.conf /etc/php-fpm.d/www.conf
 RUN groupadd www && \
   usermod -a -G www nginx && \
   chown -R nginx:www /var/www && \
-  chmod 2775 /var/www && \
-  find /var/www -type d -exec chmod 2775 {} + && \
-  find /var/www -type f -exec chmod 0664 {} +
+  chmod 2775 /var/www
 # Install WP
-# COPY --from=wpsrc /usr/src/wordpress /var/www/html
-# COPY resources/wp-config-docker.php /var/www/html/wp-config.php
+COPY --from=wpsrc /usr/src/wordpress /var/www/html
+COPY resources/wp-config-docker.php /var/www/html/wp-config.php
 RUN chown -R nginx:www /var/www/html && \
   find /var/www -type d -exec chmod 2775 {} + && \
   find /var/www -type f -exec chmod 0664 {} +
