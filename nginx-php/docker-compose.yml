@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  wp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - WORDPRESS_DB_HOST=db
+      - WORDPRESS_DB_USER=wpdbuser
+      - WORDPRESS_DB_PASSWORD=Password
+      - WORDPRESS_DB_NAME=wpdbname
+    ports:
+      - "85:80"
+  db:
+    image: mysql
+    environment:
+      - MYSQL_DATABASE=wpdbname
+      - MYSQL_USER=wpdbuser
+      - MYSQL_PASSWORD=Password
+      - MYSQL_ROOT_PASSWORD=P@ssword
+    volumes:
+      - dbdata:/var/lib/mysql
+volumes:
+  dbdata:
