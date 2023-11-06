@@ -23,7 +23,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: ./apache-php
-        file: ./Dockerfile
+        file: ./apache-php/Dockerfile
         platforms: linux/amd64,linux/arm64
         push: true
         tags: ${{ secrets.DOCKER_USER }}/apache-php
