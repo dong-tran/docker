@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    # image: kakavic/nginx-php
     environment:
       - WORDPRESS_DB_HOST=db
       - WORDPRESS_DB_USER=wpdbuser
