@@ -11,6 +11,7 @@ services:
       - WORDPRESS_DB_USER=wpdbuser
       - WORDPRESS_DB_PASSWORD=Password
       - WORDPRESS_DB_NAME=wpdbname
+      - WP_CACHE=true
     ports:
       - "85:80"
   db:
@@ -22,5 +23,7 @@ services:
       - MYSQL_ROOT_PASSWORD=P@ssword
     volumes:
       - dbdata:/var/lib/mysql
+  redis:
+    image: redis
 volumes:
   dbdata:

@@ -46,7 +46,21 @@ RUN apt install -y -q ghostscript
 # Install php-redis
 RUN pecl -q install -o -n -f --configureoptions 'enable-redis-igbinary="no" enable-redis-lzf="no" enable-redis-zstd="no" enable-redis-msgpack="no" enable-redis-lz4="no" with-liblz4="no"' redis && \
   rm -rf /tmp/pear && \
-  docker-php-ext-enable redis
+  docker-php-ext-enable redis opcache
+# Ioncube
+RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+        curl -fSL 'https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz' -o ioncube.tar.gz; \
+    elif [ "$(dpkg --print-architecture)" = "arm64" ]; then \
+        curl -fSL 'https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_aarch64.tar.gz' -o ioncube.tar.gz; \
+    fi
+# Extract and install IonCube
+RUN mkdir -p ioncube && \
+	tar -xf ioncube.tar.gz -C ioncube --strip-components=1 && \
+	chmod 755 ioncube/ioncube_loader_lin_7.4.so && \
+	chown -R root:root ioncube/ioncube_loader_lin_7.4.so && \
+	mv ioncube/ioncube_loader_lin_7.4.so `php-config --extension-dir` && \
+	rm -rf ioncube ioncube.tar.gz && \
+	docker-php-ext-enable ioncube_loader_lin_7.4
 # Create folder for unix sock
 RUN mv /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
 RUN mkdir -p /run/php-fpm
@@ -55,7 +69,7 @@ COPY resources/nginx.conf /etc/nginx/conf.d/default.conf
 COPY resources/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
 RUN mv /usr/local/etc/php-fpm.d/zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf.backup
 RUN mv /usr/local/etc/php-fpm.d/docker.conf /usr/local/etc/php-fpm.d/docker.conf.backup
-# Sample index
+# Sample phpinfo
 # COPY resources/phpinfo.php /var/www/html/phpinfo.php
 # Prepare www docs
 RUN groupadd www && \
@@ -66,6 +80,14 @@ RUN groupadd www && \
 RUN curl -o /tmp/wordpress.tar.gz https://wordpress.org/wordpress-6.2.3.tar.gz && \
   tar -xzf /tmp/wordpress.tar.gz -C /var/www/html --strip-components=1 && \
   rm -rf /tmp/wordpress.tar.gz
+# Remove default themes, plugins
+RUN rm -rf /var/www/html/wp-content/themes/twentytwentyone && \
+  rm -rf /var/www/html/wp-content/themes/twentytwentytwo && \
+  rm -rf /var/www/html/wp-content/plugins/akismet && \
+  rm -rf /var/www/html/wp-content/plugins/hello.php
+# Install object-cache
+COPY resources/object-cache.php /var/www/html/wp-content/object-cache.php
+COPY resources/redis-cache /var/www/html/wp-content/plugins/redis-cache
 COPY resources/wp-config-docker.php /var/www/html/wp-config.php
 RUN chown -R nginx:www /var/www/html && \
   find /var/www -type d -exec chmod 2775 {} + && \

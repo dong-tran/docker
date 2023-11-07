@@ -64,6 +64,16 @@ define( 'DB_CHARSET', getenv_docker('WORDPRESS_DB_CHARSET', 'utf8') );
 /** The database collate type. Don't change this if in doubt. */
 define( 'DB_COLLATE', getenv_docker('WORDPRESS_DB_COLLATE', '') );
 
+define( 'WP_REDIS_HOST', getenv_docker('WP_REDIS_HOST', 'redis') );
+define( 'WP_REDIS_PORT', getenv_docker('WP_REDIS_PORT', 6379) );
+define( 'WP_REDIS_PREFIX', getenv_docker('WP_REDIS_PREFIX', 'production') );
+define( 'WP_REDIS_MAXTTL', getenv_docker('WP_REDIS_MAXTTL', 259200) );
+define( 'WP_CACHE',getenv_docker('WP_CACHE', false) );
+define( 'WP_MEMORY_LIMIT', '1938M' );
+define( 'WP_POST_REVISIONS', 10 );
+define( 'WP_DEBUG_LOG', false );
+define( 'WP_DEBUG_display', false );
+
 /**#@+
  * Authentication unique keys and salts.
  *
