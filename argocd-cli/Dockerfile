@@ -1,6 +1,6 @@
 FROM alpine
 
-# Install ArgoCD CLI
+# Install ArgoCD CLI 
 ENV VERSION=v2.8.4
 ARG TARGETPLATFORM
 
