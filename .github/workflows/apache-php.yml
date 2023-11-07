@@ -7,7 +7,7 @@ on:
       - 'apache-php/**'
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Setup docker (missing on MacOS)
@@ -32,4 +32,6 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         tags: ${{ secrets.DOCKER_USER }}/apache-php
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
