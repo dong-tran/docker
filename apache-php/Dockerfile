@@ -2,7 +2,7 @@ FROM wordpress:php8.2-fpm as wpsrc
 
 FROM amazonlinux
 
-RUN yum -y update
+RUN ulimit -n 1024000 && yum -y update
 RUN yum install -y -q gcc make
 RUN yum install -y -q httpd php-fpm
 RUN yum install -y -q php-devel php-mysqli php-pdo \
