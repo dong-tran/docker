@@ -3,14 +3,14 @@ FROM wordpress:php8.2-fpm as wpsrc
 FROM amazonlinux
 
 RUN yum -y update
-RUN yum install -y -q gcc make
-RUN yum install -y -q nginx php-fpm
-RUN yum install -y -q php-devel php-mysqli php-pdo \
+RUN ulimit -n 1024000 && yum install -y -q gcc make
+RUN ulimit -n 1024000 && yum install -y -q nginx php-fpm
+RUN ulimit -n 1024000 && yum install -y -q php-devel php-mysqli php-pdo \
   php-pear php-mbstring php-cli php-odbc \
   php-gd php-xml php-soap php-zip php-intl php-opcache
-RUN yum install -y -q ghostscript
+RUN ulimit -n 1024000 && yum install -y -q ghostscript
 # Install Imagick
-RUN yum install -y -q ImageMagick ImageMagick-devel && \
+RUN ulimit -n 1024000 && yum install -y -q ImageMagick ImageMagick-devel && \
   pear update-channels && \
   pecl update-channels && \
   pecl -q install --configureoptions 'with-imagick="autodetect"' imagick
