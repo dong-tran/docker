@@ -19,8 +19,7 @@ RUN echo "extension=imagick" >> /etc/php.d/30-imagick.ini
 RUN pecl -q install redis
 RUN echo "extension=redis" >> /etc/php.d/30-redis.ini
 # Cleanup
-RUN yum remove -y -q gcc make && \
-  yum autoremove && \
+RUN yum autoremove && \
   yum clean all
 # Create folder for unix sock
 RUN mkdir -p /run/php-fpm
