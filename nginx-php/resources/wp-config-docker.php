@@ -68,11 +68,11 @@ define( 'WP_REDIS_HOST', getenv_docker('WP_REDIS_HOST', 'redis') );
 define( 'WP_REDIS_PORT', getenv_docker('WP_REDIS_PORT', 6379) );
 define( 'WP_REDIS_PREFIX', getenv_docker('WP_REDIS_PREFIX', 'production') );
 define( 'WP_REDIS_MAXTTL', getenv_docker('WP_REDIS_MAXTTL', 259200) );
-define( 'WP_CACHE',getenv_docker('WP_CACHE', false) );
-define( 'WP_MEMORY_LIMIT', '1938M' );
-define( 'WP_POST_REVISIONS', 10 );
-define( 'WP_DEBUG_LOG', false );
-define( 'WP_DEBUG_display', false );
+define( 'WP_CACHE', getenv_docker('WP_CACHE', false) );
+define( 'WP_MEMORY_LIMIT', getenv_docker('WP_MEMORY_LIMIT', '1938M') );
+define( 'WP_POST_REVISIONS', getenv_docker('WP_POST_REVISIONS', 10) );
+define( 'WP_DEBUG_LOG', getenv_docker('WP_DEBUG_LOG', false) );
+define( 'WP_DEBUG_display', getenv_docker('WP_DEBUG_display', false) );
 
 /**#@+
  * Authentication unique keys and salts.
