@@ -33,6 +33,9 @@ RUN set -ex; \
 	pecl install imagick-3.6.0; \
 	docker-php-ext-enable imagick; \
 	rm -r /tmp/pear;
+# Configure PDO from sqlite to mysql
+RUN docker-php-ext-install pdo_mysql
+# Install nginx
 RUN apt install -y curl gnupg2 ca-certificates lsb-release debian-archive-keyring
 RUN curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
     | tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
@@ -42,6 +45,9 @@ http://nginx.org/packages/debian `lsb_release -cs` nginx" | \
 RUN echo "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" | \
   tee /etc/apt/preferences.d/99nginx
 RUN apt update -y && apt install -y nginx
+RUN sed -i s/'"$http_user_agent" "$http_x_forwarded_for"'/'"$http_user_agent" "$http_x_forwarded_for" "$upstream_response_time"'/g /etc/nginx/nginx.conf
+RUN sed -i s/'#gzip  on;'/'gzip  on;'/g /etc/nginx/nginx.conf
+# Install GhostScript
 RUN apt install -y -q ghostscript
 # Install php-redis
 RUN pecl -q install -o -n -f --configureoptions 'enable-redis-igbinary="no" enable-redis-lzf="no" enable-redis-zstd="no" enable-redis-msgpack="no" enable-redis-lz4="no" with-liblz4="no"' redis && \
