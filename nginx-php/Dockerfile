@@ -89,7 +89,7 @@ RUN curl -o /tmp/wordpress.tar.gz https://wordpress.org/wordpress-6.2.3.tar.gz &
 # Remove default themes, plugins
 RUN rm -rf /var/www/html/wp-content/themes/twentytwentyone && \
   rm -rf /var/www/html/wp-content/themes/twentytwentytwo && \
-  rm -rf /var/www/html/wp-content/plugins/akismet && \
+  # rm -rf /var/www/html/wp-content/plugins/akismet && \
   rm -rf /var/www/html/wp-content/plugins/hello.php
 # Install object-cache
 COPY resources/object-cache.php /var/www/html/wp-content/object-cache.php
