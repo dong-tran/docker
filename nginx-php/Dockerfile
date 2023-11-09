@@ -96,6 +96,9 @@ RUN rm -rf /var/www/html/wp-content/themes/twentytwentyone && \
 RUN curl -o /tmp/redis-cache.zip https://downloads.wordpress.org/plugin/redis-cache.2.4.4.zip && \
   unzip /tmp/redis-cache.zip -d /var/www/html/wp-content/plugins && \
   rm -rf /tmp/redis-cache.zip && cp /var/www/html/wp-content/plugins/redis-cache/includes/object-cache.php /var/www/html/wp-content/object-cache.php
+RUN curl -o /tmp/wp-native-php-sessions.zip https://downloads.wordpress.org/plugin/wp-native-php-sessions.1.4.2.zip && \
+  unzip /tmp/wp-native-php-sessions.zip -d /var/www/html/wp-content/plugins && \
+  rm -rf /tmp/wp-native-php-sessions.zip
 COPY resources/wp-config-docker.php /var/www/html/wp-config.php
 RUN chown -R nginx:www /var/www/html && \
   find /var/www -type d -exec chmod 2775 {} + && \
