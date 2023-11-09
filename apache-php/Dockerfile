@@ -40,10 +40,10 @@ RUN apt install -y apache2 unzip
 RUN sed -i s/#ServerRoot/ServerRoot/g /etc/apache2/apache2.conf
 RUN sed -i 's/"" combined/" %{ms}T" combined/g' /etc/apache2/apache2.conf
 RUN echo 'SetEnvIf Request_URI "^/robots\.txt$" dontlog' >> /etc/apache2/apache2.conf
-RUN echo 'SetEnvIf Request_URI "^.+.(ogg|ogv|svg|svgz|eot|otf|woff|mp4|ttf|css|rss|atom|js|jpg|jpeg|gif|png|ico|zip|tgz|gz|rar|bz2|doc|xls|exe|ppt|tar|mid|midi|wav|bmp|rtf|webp|woff2)$" dontlog' >> /etc/apache2/apache2.conf
+RUN echo 'SetEnvIf Request_URI "^/.*\.(ogg|ogv|svg|svgz|eot|otf|woff|mp4|ttf|css|rss|atom|js|jpg|jpeg|gif|png|ico|zip|tgz|gz|rar|bz2|doc|xls|exe|ppt|tar|mid|midi|wav|bmp|rtf|webp|woff2)$" dontlog' >> /etc/apache2/apache2.conf
 RUN echo 'SetEnvIf Request_URI "/favicon\.ico$" dontlog' >> /etc/apache2/apache2.conf
-RUN echo "CustomLog /dev/stdout combined" >> /etc/apache2/apache2.conf
-RUN echo "ErrorLog  /dev/stderr" >> /etc/apache2/apache2.conf
+RUN echo "CustomLog /dev/stdout combined env=!dontlog" >> /etc/apache2/apache2.conf
+RUN echo "ErrorLog  /dev/stdout" >> /etc/apache2/apache2.conf
 # COPY resources/envvars.env /etc/apache2/envvars
 COPY resources/apache2.conf /etc/apache2/sites-available/000-default.conf
 RUN mkdir /var/run/apache2
