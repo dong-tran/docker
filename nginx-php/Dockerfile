@@ -44,7 +44,7 @@ http://nginx.org/packages/debian `lsb_release -cs` nginx" | \
   tee /etc/apt/sources.list.d/nginx.list
 RUN echo "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" | \
   tee /etc/apt/preferences.d/99nginx
-RUN apt update -y && apt install -y nginx
+RUN apt update -y && apt install -y nginx unzip
 RUN sed -i s/'"$http_user_agent" "$http_x_forwarded_for"'/'"$http_user_agent" "$http_x_forwarded_for" "$upstream_response_time"'/g /etc/nginx/nginx.conf
 RUN sed -i s/'#gzip  on;'/'gzip  on;'/g /etc/nginx/nginx.conf
 # Install GhostScript
@@ -71,12 +71,13 @@ RUN mkdir -p ioncube && \
 RUN mv /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
 RUN mkdir -p /run/php-fpm
 # Config nginx and php-fpm
-COPY resources/nginx.conf /etc/nginx/conf.d/default.conf
+COPY resources/nginx.conf /etc/nginx/nginx.conf
+COPY resources/nginx-server.conf /etc/nginx/conf.d/default.conf
 COPY resources/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
 RUN mv /usr/local/etc/php-fpm.d/zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf.backup
 RUN mv /usr/local/etc/php-fpm.d/docker.conf /usr/local/etc/php-fpm.d/docker.conf.backup
 # Sample phpinfo
-# COPY resources/phpinfo.php /var/www/html/phpinfo.php
+# RUN echo "<?php phpinfo(); ?>" >> /var/www/html/phpinfo.php
 # Prepare www docs
 RUN groupadd www && \
   usermod -a -G www nginx && \
@@ -92,8 +93,9 @@ RUN rm -rf /var/www/html/wp-content/themes/twentytwentyone && \
   # rm -rf /var/www/html/wp-content/plugins/akismet && \
   rm -rf /var/www/html/wp-content/plugins/hello.php
 # Install object-cache
-COPY resources/object-cache.php /var/www/html/wp-content/object-cache.php
-COPY resources/redis-cache /var/www/html/wp-content/plugins/redis-cache
+RUN curl -o /tmp/redis-cache.zip https://downloads.wordpress.org/plugin/redis-cache.2.4.4.zip && \
+  unzip /tmp/redis-cache.zip -d /var/www/html/wp-content/plugins && \
+  rm -rf /tmp/redis-cache.zip && cp /var/www/html/wp-content/plugins/redis-cache/includes/object-cache.php /var/www/html/wp-content/object-cache.php
 COPY resources/wp-config-docker.php /var/www/html/wp-config.php
 RUN chown -R nginx:www /var/www/html && \
   find /var/www -type d -exec chmod 2775 {} + && \
@@ -103,3 +105,4 @@ COPY resources/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod a+x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT [ "entrypoint.sh" ]
+CMD [ "nginx", "-g", "daemon off;" ]

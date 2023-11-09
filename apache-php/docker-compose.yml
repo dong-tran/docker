@@ -21,5 +21,7 @@ services:
       - MYSQL_ROOT_PASSWORD=P@ssword
     volumes:
       - dbdata:/var/lib/mysql
+  redis:
+    image: redis
 volumes:
   dbdata:
