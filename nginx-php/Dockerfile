@@ -1,108 +1,116 @@
+##### Builder setup needed application
+FROM debian:bullseye AS builder
+
+ENV NGINX_VERSION=1.24.0
+ENV NGX_CACHE_PURGE_VERSION=2.3
+ENV PHP_VERSION=7.4
+ENV WP_VERSION=6.2.3
+ENV REDIS_CACHE_VERSION=2.4.4
+ENV PHP_NATIVE_SESSION_VERSION=1.4.2
+
+## NginX
+RUN apt-get update && apt upgrade -y && apt autoremove -y && \
+    apt-get install -y build-essential wget libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev unzip curl
+WORKDIR /tmp
+RUN wget http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
+    tar -zxvf nginx-${NGINX_VERSION}.tar.gz
+RUN wget https://github.com/FRiCKLE/ngx_cache_purge/archive/${NGX_CACHE_PURGE_VERSION}.tar.gz && \
+    tar -zxvf ${NGX_CACHE_PURGE_VERSION}.tar.gz
+WORKDIR /tmp/nginx-${NGINX_VERSION}
+RUN ./configure --add-module=/tmp/ngx_cache_purge-${NGX_CACHE_PURGE_VERSION} && \
+    make && make install
+WORKDIR /tmp
+## IonCube
+RUN set -ex; \
+	savedAptMark="$(dpkg --print-architecture)"; \
+	if [ $savedAptMark = "amd64" ]; then \
+		wget -O ioncube.tar.gz 'https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz'; \
+	elif [ $savedAptMark = "arm64" ]; then \
+		wget -O ioncube.tar.gz 'https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_aarch64.tar.gz'; \
+	fi; \
+	mkdir -p ioncube; \
+	tar -xf ioncube.tar.gz -C ioncube --strip-components=1; \
+	chmod 755 ioncube/ioncube_loader_lin_${PHP_VERSION}.so; \
+	chown -R root:root ioncube/ioncube_loader_lin_${PHP_VERSION}.so; \
+	mv ioncube/ioncube_loader_lin_${PHP_VERSION}.so /tmp/ioncube_loader.so; \
+	rm -rf ioncube ioncube.tar.gz;
+## Wordpress
+
+RUN set -ex; \
+	wget -O /tmp/wordpress.tar.gz https://wordpress.org/wordpress-${WP_VERSION}.tar.gz; \
+	mkdir wordpress; \
+	tar -xzf /tmp/wordpress.tar.gz -C wordpress --strip-components=1; \
+  rm -rf /tmp/wordpress.tar.gz; \
+	wget -O /tmp/redis-cache.zip https://downloads.wordpress.org/plugin/redis-cache.${REDIS_CACHE_VERSION}.zip; \
+	unzip /tmp/redis-cache.zip; \
+	rm -rf /tmp/redis-cache.zip; \
+	wget -O /tmp/wp-native-php-sessions.zip https://downloads.wordpress.org/plugin/wp-native-php-sessions.${PHP_NATIVE_SESSION_VERSION}.zip; \
+	unzip /tmp/wp-native-php-sessions.zip; \
+	rm -rf /tmp/wp-native-php-sessions.zip;
+
+### Main line
 FROM php:7.4-fpm
 
-RUN apt update -y && apt upgrade -y && apt autoremove -y
-RUN set -ex; \
-	\
-	savedAptMark="$(apt-mark showmanual)"; \
-	\
-	apt update; \
-	apt install -y --no-install-recommends \
-		libfreetype6-dev \
-		libicu-dev \
-		libjpeg-dev \
-		libmagickwand-dev \
-		libpng-dev \
-		libwebp-dev \
-		libzip-dev \
-	; \
-	\
-	docker-php-ext-configure gd \
-		--with-freetype \
-		--with-jpeg \
-		--with-webp \
-	; \
-	docker-php-ext-install -j "$(nproc)" \
-		bcmath \
-		exif \
-		gd \
-		intl \
-		mysqli \
-		zip \
-	; \
-# https://pecl.php.net/package/imagick
-	pecl install imagick-3.6.0; \
-	docker-php-ext-enable imagick; \
-	rm -r /tmp/pear;
-# Configure PDO from sqlite to mysql
-RUN docker-php-ext-install pdo_mysql
-# Install nginx
-RUN apt install -y curl gnupg2 ca-certificates lsb-release debian-archive-keyring
-RUN curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
-    | tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
-RUN echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] \
-http://nginx.org/packages/debian `lsb_release -cs` nginx" | \
-  tee /etc/apt/sources.list.d/nginx.list
-RUN echo "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" | \
-  tee /etc/apt/preferences.d/99nginx
-RUN apt update -y && apt install -y nginx unzip
-RUN sed -i s/'"$http_user_agent" "$http_x_forwarded_for"'/'"$http_user_agent" "$http_x_forwarded_for" "$upstream_response_time"'/g /etc/nginx/nginx.conf
-RUN sed -i s/'#gzip  on;'/'gzip  on;'/g /etc/nginx/nginx.conf
+ENV IMAGICK_VERSION=3.7.0
+
 # Install GhostScript
-RUN apt install -y -q ghostscript
-# Install php-redis
-RUN pecl -q install -o -n -f --configureoptions 'enable-redis-igbinary="no" enable-redis-lzf="no" enable-redis-zstd="no" enable-redis-msgpack="no" enable-redis-lz4="no" with-liblz4="no"' redis && \
-  rm -rf /tmp/pear && \
-  docker-php-ext-enable redis opcache
-# Ioncube
-RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
-        curl -fSL 'https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz' -o ioncube.tar.gz; \
-    elif [ "$(dpkg --print-architecture)" = "arm64" ]; then \
-        curl -fSL 'https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_aarch64.tar.gz' -o ioncube.tar.gz; \
-    fi
-# Extract and install IonCube
-RUN mkdir -p ioncube && \
-	tar -xf ioncube.tar.gz -C ioncube --strip-components=1 && \
-	chmod 755 ioncube/ioncube_loader_lin_7.4.so && \
-	chown -R root:root ioncube/ioncube_loader_lin_7.4.so && \
-	mv ioncube/ioncube_loader_lin_7.4.so `php-config --extension-dir` && \
-	rm -rf ioncube ioncube.tar.gz && \
-	docker-php-ext-enable ioncube_loader_lin_7.4
-# Create folder for unix sock
-RUN mv /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
-RUN mkdir -p /run/php-fpm
-# Config nginx and php-fpm
-COPY resources/nginx.conf /etc/nginx/nginx.conf
-COPY resources/nginx-server.conf /etc/nginx/conf.d/default.conf
-COPY resources/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
-RUN mv /usr/local/etc/php-fpm.d/zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf.backup
-RUN mv /usr/local/etc/php-fpm.d/docker.conf /usr/local/etc/php-fpm.d/docker.conf.backup
-# Sample phpinfo
-# RUN echo "<?php phpinfo(); ?>" >> /var/www/html/phpinfo.php
+RUN apt update -y && \
+	apt upgrade -y && \
+	apt autoremove -y && \
+	apt install -y -q --no-install-recommends ghostscript libfreetype6-dev libicu-dev libjpeg-dev libmagickwand-dev libpng-dev libwebp-dev libzip-dev
+# Install PHP modules
+RUN set -ex; \
+	docker-php-ext-configure gd	--with-freetype --with-jpeg --with-webp; \
+	docker-php-ext-install -j "$(nproc)" bcmath exif gd intl mysqli zip pdo_mysql; \
+	pecl install imagick-${IMAGICK_VERSION}; \
+	pecl -q install -o -n -f --configureoptions 'enable-redis-igbinary="no" enable-redis-lzf="no" enable-redis-zstd="no" enable-redis-msgpack="no" enable-redis-lz4="no" with-liblz4="no"' redis; \
+	rm -r /tmp/pear; \
+	docker-php-ext-enable imagick redis opcache;
+# Install Nginx
+COPY --from=builder /usr/local/nginx /usr/local/nginx
+RUN ln -s /usr/local/nginx/sbin/nginx /usr/sbin/nginx
+# IonCube
+COPY --from=builder /tmp/ioncube_loader.so /tmp/ioncube_loader.so
+RUN mv /tmp/ioncube_loader.so `php-config --extension-dir` && \
+	docker-php-ext-enable ioncube_loader
 # Prepare www docs
-RUN groupadd www && \
-  usermod -a -G www nginx && \
-  chown -R nginx:www /var/www && \
+RUN usermod -a -G www-data www-data && \
+  chown -R www-data:www-data /var/www && \
   chmod 2775 /var/www
 # Install WP
-RUN curl -o /tmp/wordpress.tar.gz https://wordpress.org/wordpress-6.2.3.tar.gz && \
-  tar -xzf /tmp/wordpress.tar.gz -C /var/www/html --strip-components=1 && \
-  rm -rf /tmp/wordpress.tar.gz
+COPY --from=builder /tmp/wordpress/ /var/www/html/
 # Remove default themes, plugins
 RUN rm -rf /var/www/html/wp-content/themes/twentytwentyone && \
   rm -rf /var/www/html/wp-content/themes/twentytwentytwo && \
   # rm -rf /var/www/html/wp-content/plugins/akismet && \
   rm -rf /var/www/html/wp-content/plugins/hello.php
 # Install object-cache
-RUN curl -o /tmp/redis-cache.zip https://downloads.wordpress.org/plugin/redis-cache.2.4.4.zip && \
-  unzip /tmp/redis-cache.zip -d /var/www/html/wp-content/plugins && \
-  rm -rf /tmp/redis-cache.zip && cp /var/www/html/wp-content/plugins/redis-cache/includes/object-cache.php /var/www/html/wp-content/object-cache.php
-RUN curl -o /tmp/wp-native-php-sessions.zip https://downloads.wordpress.org/plugin/wp-native-php-sessions.1.4.2.zip && \
-  unzip /tmp/wp-native-php-sessions.zip -d /var/www/html/wp-content/plugins && \
-  rm -rf /tmp/wp-native-php-sessions.zip
+COPY --from=builder /tmp/redis-cache /var/www/html/wp-content/plugins/redis-cache
+COPY --from=builder /tmp/redis-cache/includes/object-cache.php /var/www/html/wp-content/object-cache.php
+COPY --from=builder /tmp/wp-native-php-sessions /var/www/html/wp-content/plugins/wp-native-php-sessions
 COPY resources/wp-config-docker.php /var/www/html/wp-config.php
-RUN chown -R nginx:www /var/www/html && \
+# # Sample phpinfo
+# RUN echo "<?php phpinfo(); ?>" >> /var/www/html/phpinfo.php
+RUN chown -R www-data:www-data /var/www/html && \
   find /var/www -type d -exec chmod 2775 {} + && \
   find /var/www -type f -exec chmod 0664 {} +
+## Config NginX
+COPY resources/nginx.conf /usr/local/nginx/conf/nginx.conf
+COPY resources/nginx-server.conf /usr/local/nginx/conf.d/default.conf
+## Config PHP-FPM
+# Create folder for unix sock
+RUN mkdir -p /run/php-fpm
+# Config nginx and php-fpm
+COPY resources/www.conf /usr/local/etc/php-fpm.d/www.conf
+## Config php.ini
+RUN mv /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
+RUN sed -i s/'error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT'/'error_reporting = E_ALL \& \~E_DEPRECATED \& \~E_STRICT \& \~E_NOTICE'/g /usr/local/etc/php/php.ini
+RUN sed -i s/';fastcgi.logging = 0'/'fastcgi.logging = off'/g /usr/local/etc/php/php.ini
+# Default listen on 9000 ==> remove to use unix sock 
+RUN mv /usr/local/etc/php-fpm.d/zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf.backup
+# Disable defaul config
+RUN mv /usr/local/etc/php-fpm.d/docker.conf /usr/local/etc/php-fpm.d/docker.conf.backup
+
 # Entrypoint
 COPY resources/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod a+x /usr/local/bin/entrypoint.sh

@@ -6,23 +6,26 @@ services:
       context: .
       dockerfile: Dockerfile
     # image: kakavic/nginx-php
-    environment:
-      - WORDPRESS_DB_HOST=db
-      - WORDPRESS_DB_USER=wpdbuser
-      - WORDPRESS_DB_PASSWORD=Password
-      - WORDPRESS_DB_NAME=wpdbname
-      - WP_CACHE=true
+    env_file: resources/.env
     ports:
-      - "85:80"
+      - "80:80"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2048M
+    depends_on:
+      db:
+        condition: service_healthy
   db:
-    image: mysql
-    environment:
-      - MYSQL_DATABASE=wpdbname
-      - MYSQL_USER=wpdbuser
-      - MYSQL_PASSWORD=Password
-      - MYSQL_ROOT_PASSWORD=P@ssword
+    image: mysql:8.0
+    env_file: resources/.env
     volumes:
-      - dbdata:/var/lib/mysql
+      - "dbdata:/var/lib/mysql"
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 10s
+      retries: 10
   redis:
     image: redis
 volumes:
