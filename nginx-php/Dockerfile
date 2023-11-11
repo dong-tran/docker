@@ -17,7 +17,23 @@ RUN wget http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
 RUN wget https://github.com/FRiCKLE/ngx_cache_purge/archive/${NGX_CACHE_PURGE_VERSION}.tar.gz && \
     tar -zxvf ${NGX_CACHE_PURGE_VERSION}.tar.gz
 WORKDIR /tmp/nginx-${NGINX_VERSION}
-RUN ./configure --add-module=/tmp/ngx_cache_purge-${NGX_CACHE_PURGE_VERSION} && \
+RUN ./configure \
+	--prefix=/etc/nginx \
+	--user=www-data \
+	--group=www-data \
+	--with-http_ssl_module \
+	--with-http_realip_module \
+	--with-http_gunzip_module \
+	--with-http_gzip_static_module \
+	--with-http_stub_status_module \
+	--with-http_v2_module \
+	--with-http_dav_module \
+	--with-threads \
+	--with-file-aio \
+	--with-http_slice_module \
+	--with-stream \
+	--with-stream_ssl_module \
+	--add-module=/tmp/ngx_cache_purge-${NGX_CACHE_PURGE_VERSION} && \
     make && make install
 WORKDIR /tmp
 ## IonCube
@@ -67,8 +83,8 @@ RUN set -ex; \
 	rm -r /tmp/pear; \
 	docker-php-ext-enable imagick redis opcache;
 # Install Nginx
-COPY --from=builder /usr/local/nginx /usr/local/nginx
-RUN ln -s /usr/local/nginx/sbin/nginx /usr/sbin/nginx
+COPY --from=builder /etc/nginx /etc/nginx
+RUN ln -s /etc/nginx/sbin/nginx /usr/sbin/nginx
 # IonCube
 COPY --from=builder /tmp/ioncube_loader.so /tmp/ioncube_loader.so
 RUN mv /tmp/ioncube_loader.so `php-config --extension-dir` && \
@@ -95,8 +111,8 @@ RUN chown -R www-data:www-data /var/www/html && \
   find /var/www -type d -exec chmod 2775 {} + && \
   find /var/www -type f -exec chmod 0664 {} +
 ## Config NginX
-COPY resources/nginx.conf /usr/local/nginx/conf/nginx.conf
-COPY resources/nginx-server.conf /usr/local/nginx/conf.d/default.conf
+COPY resources/nginx.conf /etc/nginx/conf/nginx.conf
+COPY resources/nginx-server.conf /etc/nginx/conf.d/default.conf
 ## Config PHP-FPM
 # Create folder for unix sock
 RUN mkdir -p /run/php-fpm
