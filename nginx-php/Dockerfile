@@ -4,9 +4,6 @@ FROM debian:bullseye AS builder
 ENV NGINX_VERSION=1.24.0
 ENV NGX_CACHE_PURGE_VERSION=2.3
 ENV PHP_VERSION=7.4
-ENV WP_VERSION=6.2.3
-ENV REDIS_CACHE_VERSION=2.4.4
-ENV PHP_NATIVE_SESSION_VERSION=1.4.2
 
 ## NginX
 RUN apt-get update && apt upgrade -y && apt autoremove -y && \
@@ -51,7 +48,6 @@ RUN set -ex; \
 	mv ioncube/ioncube_loader_lin_${PHP_VERSION}.so /tmp/ioncube_loader.so; \
 	rm -rf ioncube ioncube.tar.gz;
 ## Wordpress
-
 RUN set -ex; \
 	wget -O /tmp/wordpress.tar.gz https://wordpress.org/wordpress-${WP_VERSION}.tar.gz; \
 	mkdir wordpress; \
@@ -120,7 +116,8 @@ RUN mkdir -p /run/php-fpm
 COPY resources/www.conf /usr/local/etc/php-fpm.d/www.conf
 ## Config php.ini
 RUN mv /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
-RUN sed -i s/'error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT'/'error_reporting = E_ALL \& \~E_DEPRECATED \& \~E_STRICT \& \~E_NOTICE'/g /usr/local/etc/php/php.ini
+RUN sed -i s/'error_reporting = E_ALL'/'error_reporting = E_ALL \& \~E_NOTICE '/g /usr/local/etc/php/php.ini
+RUN sed -i s/'disable_functions ='/'disable_functions = error_reporting'/g /usr/local/etc/php/php.ini
 RUN sed -i s/';fastcgi.logging = 0'/'fastcgi.logging = off'/g /usr/local/etc/php/php.ini
 # Default listen on 9000 ==> remove to use unix sock 
 RUN mv /usr/local/etc/php-fpm.d/zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf.backup
