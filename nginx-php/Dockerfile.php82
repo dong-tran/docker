@@ -4,6 +4,9 @@ FROM debian:bullseye AS builder
 ENV NGINX_VERSION=1.24.0
 ENV NGX_CACHE_PURGE_VERSION=2.3
 ENV PHP_VERSION=8.2
+ENV WP_VERSION=6.3.2
+ENV REDIS_CACHE_VERSION=2.4.4
+ENV PHP_NATIVE_SESSION_VERSION=1.4.2
 
 ## NginX
 RUN apt-get update && apt upgrade -y && apt autoremove -y && \
