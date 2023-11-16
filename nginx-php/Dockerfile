@@ -9,8 +9,8 @@ ENV REDIS_CACHE_VERSION=2.4.4
 ENV PHP_NATIVE_SESSION_VERSION=1.4.2
 
 ## NginX
-RUN apt-get update && apt upgrade -y && apt autoremove -y && \
-    apt-get install -y build-essential wget libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev unzip curl
+RUN apt update && apt upgrade -y && apt autoremove -y && \
+    apt install -y build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev wget unzip
 WORKDIR /tmp
 RUN wget http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
     tar -zxvf nginx-${NGINX_VERSION}.tar.gz
