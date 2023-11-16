@@ -140,7 +140,7 @@ COPY --from=builder /tmp/redis-cache /var/www/html/wp-content/plugins/redis-cach
 COPY --from=builder /tmp/redis-cache/includes/object-cache.php /var/www/html/wp-content/object-cache.php
 COPY --from=builder /tmp/wp-native-php-sessions /var/www/html/wp-content/plugins/wp-native-php-sessions
 COPY src/ /var/www/html/
-COPY docker/entrypoint/wp-config-docker.php /var/www/html/wp-config.php
+COPY resources/wp-config-docker.php /var/www/html/wp-config.php
 # # Sample phpinfo
 RUN echo "<?php phpinfo(); ?>" >> /var/www/html/phpinfo.php
 RUN chown -R www-data:www-data /var/www/html && \
