@@ -141,7 +141,7 @@ COPY --from=builder /tmp/redis-cache/includes/object-cache.php /var/www/html/wp-
 COPY --from=builder /tmp/wp-native-php-sessions /var/www/html/wp-content/plugins/wp-native-php-sessions
 COPY resources/wp-config-docker.php /var/www/html/wp-config.php
 # # Sample phpinfo
-RUN echo "<?php phpinfo(); ?>" >> /var/www/html/phpinfo.php
+# RUN echo "<?php phpinfo(); ?>" >> /var/www/html/phpinfo.php
 RUN chown -R www-data:www-data /var/www/html && \
   find /var/www -type d -exec chmod 2775 {} + && \
   find /var/www -type f -exec chmod 0664 {} +
